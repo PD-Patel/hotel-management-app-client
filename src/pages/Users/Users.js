@@ -38,7 +38,7 @@ const Users = () => {
     <Container>
       <Sidebar user={user} />
       <Main>
-        <GreetingNote userName={user.name ? user.name : "user"} />
+        <GreetingNote userName={user.firstName ? user.firstName : "User"} />
         {updateMessage && <SuccessMessage>{updateMessage}</SuccessMessage>}
         <TableContainer>
           <HeaderSection>
@@ -82,7 +82,7 @@ const Users = () => {
                     </div>
                   </td>
                   <td>
-                    <p className="fw-normal mb-1">{employee.position}</p>
+                    <p className="fw-normal mb-1">{employee.role}</p>
                   </td>
                   <td>
                     <MDBBadge

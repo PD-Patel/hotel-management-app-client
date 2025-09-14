@@ -19,7 +19,7 @@ export const AdminOrManager = ({ children, fallbackPath = "/dashboard" }) => (
 
 export const EmployeeOrAbove = ({ children, fallbackPath = "/dashboard" }) => (
   <RoleProtectedRoute
-    allowedRoles={["admin", "manager", "employee"]}
+    allowedRoles={["admin", "manager", "frontdesk", "housekeeping"]}
     fallbackPath={fallbackPath}
   >
     {children}

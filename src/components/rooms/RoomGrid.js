@@ -24,8 +24,8 @@ const GridContainer = styled.div`
   gap: 16px;
   max-width: 1200px;
 
-  /* Responsive grid columns - more columns since cards are smaller */
-  grid-template-columns: 2fr; /* Default: 2 columns for mobile */
+  /* Mobile Layout - 2 columns for better mobile experience */
+  grid-template-columns: repeat(2, 1fr);
 
   @media (min-width: 640px) {
     grid-template-columns: repeat(3, 1fr); /* 3 columns for small tablets */

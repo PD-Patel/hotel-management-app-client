@@ -33,7 +33,6 @@ export const getTotalHoursOfEmployee = async (
     const response = await api.get(
       `/reports/hours/summary/employee?employeeId=${employeeId}&startDate=${startDate}&endDate=${endDate}`
     );
-    console.log(response);
     return response.data;
   } catch (error) {
     console.error(error);

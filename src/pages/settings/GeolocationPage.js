@@ -88,7 +88,7 @@ const GeolocationSetupPage = () => {
     <PageWrapper>
       <Sidebar user={user} />
       <ContentWrapper>
-        <GreetingNote userName={user.name} />
+        <GreetingNote userName={user.firstName} />
         <GeoCard>
           <GeoHeader>📍 Set Workplace Geolocation</GeoHeader>
           <MDBCardBody>

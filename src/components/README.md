@@ -1,169 +1,73 @@
-# Role-Based Route Protection
+# Frontend Components Organization
 
-This directory contains components for implementing role-based access control (RBAC) in your React application.
+## Component Structure
 
-## Components
+### Layout Components (`/layout`)
 
-### 1. ProtectedRoute
+- `Sidebar.js` - Main navigation sidebar
+- `ProtectedRoute.js` - Route protection wrapper
+- `RoleProtectedRoute.js` - Role-based route protection
+- `RouteGuard.js` - Route guard utilities
 
-Basic authentication protection - only checks if user is logged in.
+### Dashboard Components (`/dashboard`)
 
-```jsx
-import ProtectedRoute from "./components/ProtectedRoute";
+- `currentlyClockedInCard.js` - Currently clocked in display
+- `EmployeeHoursDashboardCard.js` - Employee hours summary
+- `HoursCard.js` - Hours display card
+- `TotalEmployeeCard.js` - Total employee count
+- `TotalPayRollAmountCard.js` - Payroll amount display
 
-<Route
-  path="/dashboard"
-  element={
-    <ProtectedRoute>
-      <Dashboard />
-    </ProtectedRoute>
-  }
-/>;
-```
+### Form Components (`/forms`)
 
-### 2. RoleProtectedRoute
+- `EmployeeForm.js` - Employee creation/editing form
 
-Advanced role-based protection with customizable fallback behavior.
+### UI Components (`/ui`)
 
-```jsx
-import RoleProtectedRoute from "./components/RoleProtectedRoute";
+- `Alert.js` - Alert/notification component
+- `AccessDenied.js` - Access denied message
+- `GreetingNote.js` - Greeting display
 
-<Route
-  path="/admin-only"
-  element={
-    <RoleProtectedRoute
-      allowedRoles={["admin"]}
-      fallbackPath="/dashboard"
-      showAccessDenied={false}
-    >
-      <AdminPage />
-    </RoleProtectedRoute>
-  }
-/>;
-```
+### Feature Components (`/feature`)
 
-**Props:**
+- `housekeeping/` - Housekeeping-specific components
+- `rooms/` - Room management components
 
-- `allowedRoles`: Array of roles that can access the route
-- `fallbackPath`: Where to redirect unauthorized users (default: "/dashboard")
-- `showAccessDenied`: Show access denied page instead of redirecting (default: false)
+## Coding Standards
 
-### 3. RouteGuard (Predefined Guards)
+### File Naming
 
-Convenient predefined route guards for common role combinations.
+- Use PascalCase for all component files (e.g., `CurrentlyClockedInCard.js`)
+- Use descriptive names that indicate the component's purpose
 
-```jsx
-import { AdminOnly, AdminOrManager, EmployeeOrAbove } from "./components/RouteGuard";
+### Component Structure
 
-// Admin only
-<Route
-  path="/employee"
-  element={
-    <AdminOnly>
-      <Employee />
-    </AdminOnly>
-  }
-/>
+- Keep components under 200 lines when possible
+- Extract complex logic into custom hooks
+- Use TypeScript-style prop validation with PropTypes or TypeScript
 
-// Admin or Manager
-<Route
-  path="/settings"
-  element={
-    <AdminOrManager>
-      <Settings />
-    </AdminOrManager>
-  }
-/>
+### State Management
 
-// Employee or above (any authenticated user)
-<Route
-  path="/profile"
-  element={
-    <EmployeeOrAbove>
-      <Profile />
-    </EmployeeOrAbove>
-  }
-/>
-```
+- Use React hooks (useState, useEffect, useContext)
+- Keep state as local as possible
+- Use context for global state (auth, user preferences)
 
-### 4. AccessDenied
+### Styling
 
-Customizable access denied page component.
+- Use styled-components for component-specific styles
+- Follow consistent spacing and typography
+- Use CSS variables for theme values
 
-```jsx
-import AccessDenied from "./components/AccessDenied";
+### Performance
 
-<AccessDenied
-  title="Custom Title"
-  message="Custom message here"
-  buttonText="Go Back"
-  onButtonClick={() => history.goBack()}
-/>;
-```
-
-## Usage Examples
-
-### Basic Role Protection
-
-```jsx
-// Only admins can access
-<Route
-  path="/admin"
-  element={
-    <AdminOnly>
-      <AdminPanel />
-    </AdminOnly>
-  }
-/>
-```
-
-### Custom Role Combinations
-
-```jsx
-// Multiple specific roles
-<Route
-  path="/management"
-  element={
-    <CustomRoleGuard allowedRoles={["admin", "manager", "supervisor"]}>
-      <ManagementPanel />
-    </CustomRoleGuard>
-  }
-/>
-```
-
-### Show Access Denied Instead of Redirect
-
-```jsx
-// Show access denied page
-<Route
-  path="/restricted"
-  element={
-    <RoleProtectedRoute allowedRoles={["admin"]} showAccessDenied={true}>
-      <RestrictedPage />
-    </RoleProtectedRoute>
-  }
-/>
-```
-
-## Role Hierarchy
-
-The system supports these roles (defined in your User model):
-
-- `admin`: Full access to all features
-- `employee`: Basic access to dashboard and clock in/out
-- `manager`: Access to management features (if you add this role)
+- Memoize expensive calculations with useMemo
+- Use useCallback for event handlers passed to child components
+- Implement React.memo for components that re-render frequently
 
 ## Best Practices
 
-1. **Use predefined guards** when possible for consistency
-2. **Set appropriate fallback paths** for better UX
-3. **Consider showing access denied** for important restricted areas
-4. **Group routes by access level** in your App.js for better organization
-5. **Test with different user roles** to ensure protection works correctly
-
-## Security Notes
-
-- Role checking happens on the client side for UX
-- Always implement server-side role validation for API endpoints
-- The role information comes from your AuthContext
-- Users cannot bypass role restrictions by manipulating client-side code
+1. **Single Responsibility**: Each component should have one clear purpose
+2. **Props Interface**: Define clear prop interfaces
+3. **Error Boundaries**: Implement error boundaries for critical sections
+4. **Loading States**: Always show loading states for async operations
+5. **Accessibility**: Include ARIA labels and keyboard navigation
+6. **Testing**: Write tests for complex logic and user interactions

@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Sidebar from "../../components/Sidebar";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import GreetingNote from "../../components/GreetingNote";
+import { MDBIcon } from "mdb-react-ui-kit";
 import api from "../../services/api";
 
 const RoomManagementPage = () => {
   const { user } = useAuth();
+  const { isDarkMode } = useTheme();
   const [rooms, setRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newRoomNumber, setNewRoomNumber] = useState("");
@@ -15,12 +18,19 @@ const RoomManagementPage = () => {
   const [isAddingBulk, setIsAddingBulk] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [viewMode, setViewMode] = useState("grid"); // grid or list
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (user && user.siteId) {
       fetchRooms();
     }
   }, [user]);
+
+  useEffect(() => {
+    setFilterStatus("all");
+  }, [searchTerm]);
 
   const fetchRooms = async () => {
     try {
@@ -41,7 +51,6 @@ const RoomManagementPage = () => {
       return;
     }
 
-    // Check if room number already exists
     if (rooms.some((room) => room.number === newRoomNumber.trim())) {
       setError("Room number already exists");
       return;
@@ -57,11 +66,7 @@ const RoomManagementPage = () => {
 
       setSuccess(`Room ${newRoomNumber} added successfully!`);
       setNewRoomNumber("");
-
-      // Refresh rooms list
       await fetchRooms();
-
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error("Error adding room:", error);
@@ -81,7 +86,6 @@ const RoomManagementPage = () => {
       setIsAddingBulk(true);
       setError("");
 
-      // Parse room numbers from comma-separated string
       const roomNumbers = bulkRoomNumbers
         .split(",")
         .map((num) => num.trim())
@@ -98,11 +102,7 @@ const RoomManagementPage = () => {
 
       setSuccess(`Successfully added ${response.data.count} rooms!`);
       setBulkRoomNumbers("");
-
-      // Refresh rooms list
       await fetchRooms();
-
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error("Error adding bulk rooms:", error);
@@ -124,11 +124,7 @@ const RoomManagementPage = () => {
     try {
       await api.delete(`/rooms/${roomId}`);
       setSuccess(`Room ${roomNumber} deleted successfully!`);
-
-      // Refresh rooms list
       await fetchRooms();
-
-      // Clear success message after 3 seconds
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error("Error deleting room:", error);
@@ -142,69 +138,197 @@ const RoomManagementPage = () => {
     }
   };
 
+  // Filter and search rooms
+  const filteredRooms = rooms.filter((room) => {
+    const matchesSearch = room.number
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      filterStatus === "all" || room.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  // Get room statistics
+  const roomStats = {
+    total: rooms.length,
+    vacant: rooms.filter((r) => r.status === "vacant").length,
+    occupied: rooms.filter((r) => r.status === "occupied").length,
+    maintenance: rooms.filter((r) => r.status === "maintenance").length,
+    cleaning: rooms.filter((r) => r.status === "cleaning").length,
+  };
+
   if (isLoading) {
     return (
-      <Container>
+      <Container isDarkMode={isDarkMode}>
         <Sidebar user={user} />
-        <Main>
+        <Main isDarkMode={isDarkMode}>
           <GreetingNote userName={user.firstName} />
           <PageHeader>
-            <Title>Room Management</Title>
-            <Subtitle>Loading rooms...</Subtitle>
+            <Title isDarkMode={isDarkMode}>Room Management</Title>
+            <Subtitle isDarkMode={isDarkMode}>Loading rooms...</Subtitle>
           </PageHeader>
+          <LoadingContainer>
+            <LoadingSpinner />
+            <LoadingText>Loading room data...</LoadingText>
+          </LoadingContainer>
         </Main>
       </Container>
     );
   }
 
   return (
-    <Container>
+    <Container isDarkMode={isDarkMode}>
       <Sidebar user={user} />
-      <Main>
+      <Main isDarkMode={isDarkMode}>
         <GreetingNote userName={user.firstName} />
+
+        {/* Page Header */}
         <PageHeader>
-          <Title>Room Management</Title>
-          <Subtitle>Manage rooms for your site</Subtitle>
+          <HeaderContent>
+            <HeaderLeft>
+              <Title isDarkMode={isDarkMode}>Room Management</Title>
+              <Subtitle isDarkMode={isDarkMode}>
+                Manage and monitor all rooms in your property
+              </Subtitle>
+            </HeaderLeft>
+            <HeaderActions>
+              <ViewToggle>
+                <ViewButton
+                  active={viewMode === "grid"}
+                  onClick={() => setViewMode("grid")}
+                  isDarkMode={isDarkMode}
+                >
+                  <MDBIcon fas icon="th-large" />
+                </ViewButton>
+                <ViewButton
+                  active={viewMode === "list"}
+                  onClick={() => setViewMode("list")}
+                  isDarkMode={isDarkMode}
+                >
+                  <MDBIcon fas icon="list" />
+                </ViewButton>
+              </ViewToggle>
+            </HeaderActions>
+          </HeaderContent>
         </PageHeader>
+
+        {/* Statistics Cards */}
+        <StatsGrid>
+          <StatCard>
+            <StatIcon status="total">
+              <MDBIcon fas icon="bed" />
+            </StatIcon>
+            <StatContent>
+              <StatNumber>{roomStats.total}</StatNumber>
+              <StatLabel>Total Rooms</StatLabel>
+            </StatContent>
+          </StatCard>
+
+          <StatCard>
+            <StatIcon status="vacant">
+              <MDBIcon fas icon="check-circle" />
+            </StatIcon>
+            <StatContent>
+              <StatNumber>{roomStats.vacant}</StatNumber>
+              <StatLabel>Vacant</StatLabel>
+            </StatContent>
+          </StatCard>
+
+          <StatCard>
+            <StatIcon status="occupied">
+              <MDBIcon fas icon="user" />
+            </StatIcon>
+            <StatContent>
+              <StatNumber>{roomStats.occupied}</StatNumber>
+              <StatLabel>Occupied</StatLabel>
+            </StatContent>
+          </StatCard>
+
+          <StatCard>
+            <StatIcon status="maintenance">
+              <MDBIcon fas icon="tools" />
+            </StatIcon>
+            <StatContent>
+              <StatNumber>{roomStats.maintenance}</StatNumber>
+              <StatLabel>Maintenance</StatLabel>
+            </StatContent>
+          </StatCard>
+        </StatsGrid>
 
         {/* Add Room Section */}
         <AddRoomSection>
-          <AddRoomTitle>Add New Room</AddRoomTitle>
+          <SectionHeader>
+            <SectionTitle isDarkMode={isDarkMode}>
+              <MDBIcon fas icon="plus-circle" />
+              Add New Room
+            </SectionTitle>
+          </SectionHeader>
+
           <AddRoomForm>
-            <RoomNumberInput
-              type="text"
-              placeholder="Enter room number (e.g., 101, 201)"
-              value={newRoomNumber}
-              onChange={(e) => setNewRoomNumber(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isAddingRoom}
-            />
+            <InputGroup>
+              <InputLabel isDarkMode={isDarkMode}>Room Number</InputLabel>
+              <RoomNumberInput
+                type="text"
+                placeholder="Enter room number (e.g., 101, 201)"
+                value={newRoomNumber}
+                onChange={(e) => setNewRoomNumber(e.target.value)}
+                onKeyPress={handleKeyPress}
+                disabled={isAddingRoom}
+              />
+            </InputGroup>
             <AddButton
               onClick={addRoom}
               disabled={isAddingRoom || !newRoomNumber.trim()}
+              isDarkMode={isDarkMode}
             >
-              {isAddingRoom ? "Adding..." : "Add Room"}
+              {isAddingRoom ? (
+                <>
+                  <LoadingSpinnerSmall />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <MDBIcon fas icon="plus" />
+                  Add Room
+                </>
+              )}
             </AddButton>
           </AddRoomForm>
 
           <BulkAddSection>
-            <BulkAddTitle>Bulk Add Rooms</BulkAddTitle>
+            <BulkAddTitle isDarkMode={isDarkMode}>Bulk Add Rooms</BulkAddTitle>
             <BulkAddForm>
-              <BulkInput
-                type="text"
-                placeholder="Enter room numbers separated by commas (e.g., 101, 102, 103)"
-                value={bulkRoomNumbers}
-                onChange={(e) => setBulkRoomNumbers(e.target.value)}
-                disabled={isAddingBulk}
-              />
+              <InputGroup>
+                <InputLabel isDarkMode={isDarkMode}>
+                  Multiple Room Numbers
+                </InputLabel>
+                <BulkInput
+                  type="text"
+                  placeholder="Enter room numbers separated by commas (e.g., 101, 102, 103)"
+                  value={bulkRoomNumbers}
+                  onChange={(e) => setBulkRoomNumbers(e.target.value)}
+                  disabled={isAddingBulk}
+                />
+              </InputGroup>
               <BulkAddButton
                 onClick={addBulkRooms}
                 disabled={isAddingBulk || !bulkRoomNumbers.trim()}
+                isDarkMode={isDarkMode}
               >
-                {isAddingBulk ? "Adding..." : "Add Multiple Rooms"}
+                {isAddingBulk ? (
+                  <>
+                    <LoadingSpinnerSmall />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <MDBIcon fas icon="layer-group" />
+                    Add Multiple Rooms
+                  </>
+                )}
               </BulkAddButton>
             </BulkAddForm>
-            <BulkAddHint>
+            <BulkAddHint isDarkMode={isDarkMode}>
               💡 Tip: You can add multiple rooms at once by separating room
               numbers with commas
             </BulkAddHint>
@@ -212,37 +336,97 @@ const RoomManagementPage = () => {
         </AddRoomSection>
 
         {/* Messages */}
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        {success && <SuccessMessage>{success}</SuccessMessage>}
+        {error && <ErrorMessage isDarkMode={isDarkMode}>{error}</ErrorMessage>}
+        {success && (
+          <SuccessMessage isDarkMode={isDarkMode}>{success}</SuccessMessage>
+        )}
 
-        {/* Rooms List */}
+        {/* Rooms List Section */}
         <RoomsSection>
-          <RoomsTitle>Current Rooms ({rooms.length})</RoomsTitle>
+          <SectionHeader>
+            <SectionTitle isDarkMode={isDarkMode}>
+              <MDBIcon fas icon="bed" />
+              Current Rooms ({filteredRooms.length})
+            </SectionTitle>
 
-          {rooms.length === 0 ? (
-            <EmptyState>
+            <SectionActions>
+              <SearchContainer>
+                <SearchInput
+                  type="text"
+                  placeholder="Search rooms..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <SearchIcon>
+                  <MDBIcon fas icon="search" />
+                </SearchIcon>
+              </SearchContainer>
+
+              <FilterContainer>
+                <FilterSelect
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="all">All Status</option>
+                  <option value="vacant">Vacant</option>
+                  <option value="occupied">Occupied</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="cleaning">Cleaning</option>
+                </FilterSelect>
+              </FilterContainer>
+            </SectionActions>
+          </SectionHeader>
+
+          {filteredRooms.length === 0 ? (
+            <EmptyState isDarkMode={isDarkMode}>
               <EmptyIcon>🏠</EmptyIcon>
-              <EmptyText>No rooms configured yet</EmptyText>
-              <EmptySubtext>
-                Add your first room using the form above
+              <EmptyText isDarkMode={isDarkMode}>
+                {searchTerm || filterStatus !== "all"
+                  ? "No rooms match your search criteria"
+                  : "No rooms configured yet"}
+              </EmptyText>
+              <EmptySubtext isDarkMode={isDarkMode}>
+                {searchTerm || filterStatus !== "all"
+                  ? "Try adjusting your search or filter settings"
+                  : "Add your first room using the form above"}
               </EmptySubtext>
             </EmptyState>
-          ) : (
+          ) : viewMode === "grid" ? (
             <RoomsGrid>
-              {rooms.map((room) => (
-                <RoomCard key={room.id}>
-                  <RoomInfo>
+              {filteredRooms.map((room) => (
+                <RoomCard key={room.id} status={room.status}>
+                  <RoomCardHeader>
                     <RoomNumber>Room {room.number}</RoomNumber>
-                    <RoomStatus status={room.status}>
-                      {room.status === "vacant" ? "Vacant" : "Occupied"}
-                    </RoomStatus>
+                    <StatusIndicator status={room.status}>
+                      <MDBIcon
+                        fas
+                        icon={room.status === "occupied" ? "bed" : "door-open"}
+                      />
+                    </StatusIndicator>
+                  </RoomCardHeader>
+
+                  <RoomCardBody>
                     <RoomDetails>
                       <DetailItem>
+                        <DetailLabel>Status:</DetailLabel>
+                        <DetailValue status={room.status}>
+                          {room.status === "vacant"
+                            ? "Available"
+                            : room.status === "occupied"
+                            ? "In Use"
+                            : room.status === "maintenance"
+                            ? "Under Repair"
+                            : "Being Cleaned"}
+                        </DetailValue>
+                      </DetailItem>
+
+                      <DetailItem>
                         <DetailLabel>Cleaning:</DetailLabel>
-                        <DetailValue needsCleaning={room.needsCleaning}>
+                        <DetailValue status={room.status}>
                           {room.needsCleaning ? "Needs Cleaning" : "Clean"}
                         </DetailValue>
                       </DetailItem>
+
                       {room.assignedEmployeeName && (
                         <DetailItem>
                           <DetailLabel>Assigned to:</DetailLabel>
@@ -250,18 +434,65 @@ const RoomManagementPage = () => {
                         </DetailItem>
                       )}
                     </RoomDetails>
-                  </RoomInfo>
-                  <RoomActions>
-                    <DeleteButton
+                  </RoomCardBody>
+
+                  <RoomCardActions>
+                    <ActionButton
                       onClick={() => deleteRoom(room.id, room.number)}
                       title="Delete room"
                     >
-                      🗑️
-                    </DeleteButton>
-                  </RoomActions>
+                      <MDBIcon fas icon="trash" />
+                    </ActionButton>
+                  </RoomCardActions>
                 </RoomCard>
               ))}
             </RoomsGrid>
+          ) : (
+            <RoomsTable>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell>Room</TableHeaderCell>
+                  <TableHeaderCell>Status</TableHeaderCell>
+                  <TableHeaderCell>Cleaning</TableHeaderCell>
+                  <TableHeaderCell>Assigned To</TableHeaderCell>
+                  <TableHeaderCell>Actions</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRooms.map((room) => (
+                  <TableRow key={room.id}>
+                    <TableCell>Room {room.number}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={room.status}>
+                        {room.status === "vacant"
+                          ? "Vacant"
+                          : room.status === "occupied"
+                          ? "Occupied"
+                          : room.status === "maintenance"
+                          ? "Maintenance"
+                          : "Cleaning"}
+                      </StatusBadge>
+                    </TableCell>
+                    <TableCell>
+                      <CleaningBadge needsCleaning={room.needsCleaning}>
+                        {room.needsCleaning ? "Needs Cleaning" : "Clean"}
+                      </CleaningBadge>
+                    </TableCell>
+                    <TableCell>
+                      {room.assignedEmployeeName || "Unassigned"}
+                    </TableCell>
+                    <TableCell>
+                      <ActionButton
+                        onClick={() => deleteRoom(room.id, room.number)}
+                        title="Delete room"
+                      >
+                        <MDBIcon fas icon="trash" />
+                      </ActionButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </RoomsTable>
           )}
         </RoomsSection>
       </Main>
@@ -276,11 +507,12 @@ const Container = styled.div`
   display: flex;
   flex-direction: row;
   height: 100vh;
+  background-color: var(--bg-primary);
 `;
 
 const Main = styled.div`
   flex: 1;
-  background-color: #f7f8fa;
+  background-color: var(--bg-primary);
   padding: 20px;
   overflow-y: auto;
 `;
@@ -289,72 +521,52 @@ const PageHeader = styled.div`
   margin-bottom: 32px;
 `;
 
-const Title = styled.h1`
-  font-size: 32px;
-  font-weight: 700;
-  color: #1c1c1c;
-  margin: 0 0 8px 0;
-`;
-
-const Subtitle = styled.p`
-  font-size: 16px;
-  color: #6c757d;
-  margin: 0;
-`;
-
-const AddRoomSection = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const AddRoomTitle = styled.h2`
-  font-size: 20px;
-  font-weight: 600;
-  color: #1c1c1c;
-  margin: 0 0 16px 0;
-`;
-
-const AddRoomForm = styled.div`
+const HeaderContent = styled.div`
   display: flex;
-  gap: 12px;
+  justify-content: space-between;
   align-items: center;
+  margin-bottom: 24px;
 `;
 
-const RoomNumberInput = styled.input`
+const HeaderLeft = styled.div`
   flex: 1;
-  padding: 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-  }
-
-  &:disabled {
-    background-color: #f8f9fa;
-    cursor: not-allowed;
-  }
 `;
 
-const AddButton = styled.button`
-  background-color: #28a745;
-  color: white;
+const HeaderActions = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
+const ViewToggle = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
+const ViewButton = styled.button`
+  background-color: ${({ active, isDarkMode }) =>
+    active
+      ? isDarkMode
+        ? "#007bff"
+        : "#28a745"
+      : isDarkMode
+      ? "#343a40"
+      : "#e9ecef"};
+  color: ${({ active, isDarkMode }) =>
+    active ? "white" : isDarkMode ? "#adb5bd" : "#495057"};
   border: none;
-  padding: 12px 24px;
+  padding: 8px 12px;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 
   &:hover:not(:disabled) {
-    background-color: #218838;
+    background-color: ${({ isDarkMode }) =>
+      isDarkMode ? "#0056b3" : "#218838"};
   }
 
   &:disabled {
@@ -363,47 +575,177 @@ const AddButton = styled.button`
   }
 `;
 
-const BulkAddSection = styled.div`
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 1px solid #e9ecef;
+const Title = styled.h1`
+  font-size: 32px;
+  font-weight: 700;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#e9ecef" : "#1c1c1c")};
+  margin: 0 0 8px 0;
 `;
 
-const BulkAddTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #1c1c1c;
-  margin: 0 0 16px 0;
+const Subtitle = styled.p`
+  font-size: 16px;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#adb5bd" : "#6c757d")};
+  margin: 0;
 `;
 
-const BulkAddForm = styled.div`
+const LoadingContainer = styled.div`
   display: flex;
-  gap: 12px;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: center;
+  padding: 40px 0;
 `;
 
-const BulkInput = styled.input`
-  flex: 1;
+const LoadingSpinner = styled.div`
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid
+    ${({ isDarkMode }) => (isDarkMode ? "#007bff" : "#28a745")};
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const LoadingText = styled.p`
+  font-size: 18px;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#adb5bd" : "#6c757d")};
+  margin-top: 15px;
+`;
+
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+`;
+
+const StatCard = styled.div`
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--card-shadow);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid var(--card-border);
+`;
+
+const StatIcon = styled.div`
+  font-size: 36px;
+  color: ${({ status }) => {
+    switch (status) {
+      case "total":
+        return "#6c757d";
+      case "vacant":
+        return "#28a745";
+      case "occupied":
+        return "#007bff";
+      case "maintenance":
+        return "#dc3545";
+      case "cleaning":
+        return "#17a2b8";
+      default:
+        return "#6c757d";
+    }
+  }};
+`;
+
+const StatContent = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const StatNumber = styled.span`
+  font-size: 24px;
+  font-weight: 700;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#e9ecef" : "#1c1c1c")};
+`;
+
+const StatLabel = styled.span`
+  font-size: 14px;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#adb5bd" : "#6c757d")};
+  margin-top: 4px;
+`;
+
+const AddRoomSection = styled.div`
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border-primary);
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.5px;
+`;
+
+const AddRoomForm = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const InputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const InputLabel = styled.label`
+  font-size: 14px;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#adb5bd" : "#495057")};
+  margin-bottom: 8px;
+  font-weight: 500;
+`;
+
+const RoomNumberInput = styled.input`
   padding: 12px 16px;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--border-primary);
   border-radius: 8px;
   font-size: 16px;
   transition: border-color 0.2s ease;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 
   &:focus {
     outline: none;
-    border-color: #007bff;
+    border-color: var(--btn-primary);
   }
 
   &:disabled {
-    background-color: #f8f9fa;
+    background-color: var(--bg-tertiary);
     cursor: not-allowed;
+    color: var(--text-muted);
   }
 `;
 
-const BulkAddButton = styled.button`
-  background-color: #007bff;
+const AddButton = styled.button`
+  background-color: ${({ isDarkMode }) => (isDarkMode ? "#007bff" : "#28a745")};
   color: white;
   border: none;
   padding: 12px 24px;
@@ -412,9 +754,99 @@ const BulkAddButton = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 
   &:hover:not(:disabled) {
-    background-color: #0056b3;
+    background-color: ${({ isDarkMode }) =>
+      isDarkMode ? "#0056b3" : "#218838"};
+  }
+
+  &:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+  }
+`;
+
+const LoadingSpinnerSmall = styled.span`
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const BulkAddSection = styled.div`
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid
+    ${({ isDarkMode }) => (isDarkMode ? "#495057" : "#e9ecef")};
+`;
+
+const BulkAddTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#e9ecef" : "#1c1c1c")};
+  margin: 0 0 16px 0;
+`;
+
+const BulkAddForm = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const BulkInput = styled.input`
+  padding: 12px 16px;
+  border: 2px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+
+  &:focus {
+    outline: none;
+    border-color: var(--btn-primary);
+  }
+
+  &:disabled {
+    background-color: var(--bg-tertiary);
+    cursor: not-allowed;
+    color: var(--text-muted);
+  }
+`;
+
+const BulkAddButton = styled.button`
+  background-color: ${({ isDarkMode }) => (isDarkMode ? "#007bff" : "#28a745")};
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  &:hover:not(:disabled) {
+    background-color: ${({ isDarkMode }) =>
+      isDarkMode ? "#0056b3" : "#218838"};
   }
 
   &:disabled {
@@ -425,46 +857,128 @@ const BulkAddButton = styled.button`
 
 const BulkAddHint = styled.p`
   font-size: 14px;
-  color: #6c757d;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#adb5bd" : "#6c757d")};
   margin: 0;
   font-style: italic;
 `;
 
 const ErrorMessage = styled.div`
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: ${({ isDarkMode }) => (isDarkMode ? "#dc3545" : "#f8d7da")};
+  color: ${({ isDarkMode }) => (isDarkMode ? "#e9ecef" : "#721c24")};
   padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 16px;
-  border: 1px solid #f5c6cb;
+  border: 1px solid ${({ isDarkMode }) => (isDarkMode ? "#dc3545" : "#f5c6cb")};
 `;
 
 const SuccessMessage = styled.div`
-  background-color: #d4edda;
-  color: #155724;
+  background-color: ${({ isDarkMode }) => (isDarkMode ? "#28a745" : "#d4edda")};
+  color: ${({ isDarkMode }) => (isDarkMode ? "#e9ecef" : "#155724")};
   padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 16px;
-  border: 1px solid #c3e6cb;
+  border: 1px solid ${({ isDarkMode }) => (isDarkMode ? "#28a745" : "#c3e6cb")};
 `;
 
 const RoomsSection = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
 `;
 
-const RoomsTitle = styled.h2`
-  font-size: 20px;
-  font-weight: 600;
-  color: #1c1c1c;
-  margin: 0 0 20px 0;
+const SectionActions = styled.div`
+  display: flex;
+  gap: 16px;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+`;
+
+const SearchContainer = styled.div`
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+
+  @media (max-width: 768px) {
+    max-width: none;
+  }
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 12px 16px 12px 45px;
+  border: 2px solid var(--border-primary);
+  border-radius: 10px;
+  font-size: 14px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--btn-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+`;
+
+const SearchIcon = styled.span`
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${({ isDarkMode }) => (isDarkMode ? "#adb5bd" : "#495057")};
+`;
+
+const FilterContainer = styled.div`
+  position: relative;
+  min-width: 160px;
+`;
+
+const FilterSelect = styled.select`
+  padding: 12px 16px;
+  border: 2px solid var(--border-primary);
+  border-radius: 10px;
+  font-size: 14px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%23adb5bd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-chevron-down' %3E%3Cpath d='M3 5l3 3 3-3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 12px;
+  padding-right: 35px;
+  transition: all 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--btn-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &:disabled {
+    background-color: var(--bg-tertiary);
+    cursor: not-allowed;
+    color: var(--text-muted);
+  }
 `;
 
 const EmptyState = styled.div`
   text-align: center;
   padding: 60px 20px;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#adb5bd" : "#6c757d")};
 `;
 
 const EmptyIcon = styled.div`
@@ -474,98 +988,286 @@ const EmptyIcon = styled.div`
 
 const EmptyText = styled.h3`
   font-size: 24px;
-  color: #6c757d;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#adb5bd" : "#6c757d")};
   margin: 0 0 12px 0;
 `;
 
 const EmptySubtext = styled.p`
   font-size: 16px;
-  color: #adb5bd;
+  color: ${({ isDarkMode }) => (isDarkMode ? "#adb5bd" : "#adb5bd")};
   margin: 0;
 `;
 
 const RoomsGrid = styled.div`
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-`;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 
-const RoomCard = styled.div`
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  transition: box-shadow 0.2s ease;
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
 
-  &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 28px;
   }
 `;
 
-const RoomInfo = styled.div`
-  flex: 1;
+const RoomsTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+`;
+
+const TableHeader = styled.thead`
+  background-color: var(--bg-secondary);
+  border-bottom: 2px solid var(--card-border);
+`;
+
+const TableRow = styled.tr`
+  &:last-child td {
+    border-bottom: none;
+  }
+`;
+
+const TableHeaderCell = styled.th`
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--card-border);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+`;
+
+const TableBody = styled.tbody`
+  & tr:last-child td {
+    border-bottom: none;
+  }
+`;
+
+const TableCell = styled.td`
+  padding: 16px 20px;
+  font-size: 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--card-border);
+  vertical-align: middle;
+`;
+
+const RoomCard = styled.div`
+  background: ${({ status }) => {
+    if (status === "occupied") {
+      return "linear-gradient(135deg, #1e293b, #334155)";
+    } else {
+      return "linear-gradient(135deg, #0f172a, #1e293b)";
+    }
+  }};
+  border: 2px solid
+    ${({ status }) => {
+      if (status === "occupied") {
+        return "#475569";
+      } else {
+        return "#334155";
+      }
+    }};
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--card-shadow);
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Mobile Layout */
+  @media (max-width: 768px) {
+    padding: 16px;
+    min-height: 120px;
+  }
+`;
+
+const RoomCardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  /* Mobile Layout */
+  @media (max-width: 768px) {
+    margin-bottom: 12px;
+  }
 `;
 
 const RoomNumber = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #1c1c1c;
-  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+  letter-spacing: -0.025em;
+
+  /* Mobile Layout */
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
 `;
 
-const RoomStatus = styled.span`
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  margin-bottom: 12px;
-  background-color: ${({ status }) =>
-    status === "vacant" ? "#d4edda" : "#f8d7da"};
-  color: ${({ status }) => (status === "vacant" ? "#155724" : "#721c24")};
+const StatusIndicator = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: ${({ status }) =>
+    status === "occupied"
+      ? "linear-gradient(135deg, var(--status-error), #dc2626)"
+      : "linear-gradient(135deg, var(--status-success), #16a34a)"};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+
+  /* Mobile Layout */
+  @media (max-width: 768px) {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+`;
+
+const RoomCardBody = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  /* Mobile Layout */
+  @media (max-width: 768px) {
+    gap: 10px;
+  }
 `;
 
 const RoomDetails = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 `;
 
 const DetailItem = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
 `;
 
-const DetailLabel = styled.span`
+const DetailLabel = styled.div`
   font-size: 12px;
-  color: #6c757d;
+  color: #cbd5e1;
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
 `;
 
-const DetailValue = styled.span`
+const DetailValue = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${({ status }) => (status === "occupied" ? "#f87171" : "#4ade80")};
+`;
+
+const StatusBadge = styled.span`
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
   font-size: 12px;
-  color: ${({ needsCleaning }) => (needsCleaning ? "#dc3545" : "#28a745")};
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: ${({ status }) => {
+    switch (status) {
+      case "vacant":
+        return "var(--status-success)";
+      case "occupied":
+        return "var(--status-error)";
+      case "maintenance":
+        return "var(--status-warning)";
+      case "cleaning":
+        return "var(--status-info)";
+      default:
+        return "var(--bg-tertiary)";
+    }
+  }};
+  color: white;
+  border: 1px solid
+    ${({ status }) => {
+      switch (status) {
+        case "vacant":
+          return "var(--status-success)";
+        case "occupied":
+          return "var(--status-error)";
+        case "maintenance":
+          return "var(--status-warning)";
+        case "cleaning":
+          return "var(--status-info)";
+        default:
+          return "var(--border-primary)";
+      }
+    }};
 `;
 
-const RoomActions = styled.div`
+const CleaningBadge = styled.span`
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: ${({ needsCleaning }) =>
+    needsCleaning ? "var(--status-error)" : "var(--status-success)"};
+  color: white;
+  border: 1px solid
+    ${({ needsCleaning }) =>
+      needsCleaning ? "var(--status-error)" : "var(--status-success)"};
+`;
+
+const RoomCardActions = styled.div`
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #334155;
   display: flex;
+  justify-content: flex-end;
   gap: 8px;
+
+  /* Mobile Layout */
+  @media (max-width: 768px) {
+    padding-top: 10px;
+  }
 `;
 
-const DeleteButton = styled.button`
+const ActionButton = styled.button`
   background: none;
   border: none;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  color: #cbd5e1;
 
   &:hover {
-    background-color: #f8d7da;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+    transform: scale(1.1);
   }
 `;

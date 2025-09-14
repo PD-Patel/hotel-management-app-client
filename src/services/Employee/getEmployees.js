@@ -1,11 +1,12 @@
-import axios from "axios";
 import api from "../api";
 
 export const getEmployees = async ({ role, siteId }) => {
   try {
     const response = await api.get("/user/all-users", {
-      role: role,
-      siteId: siteId,
+      params: {
+        role: role,
+        siteId: siteId,
+      },
     });
     return response.data;
   } catch (error) {

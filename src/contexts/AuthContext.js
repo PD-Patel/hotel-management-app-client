@@ -75,7 +75,6 @@ export const AuthProvider = ({ children }) => {
         setUser(response.data.user);
         // Set new session expiry (10 days from now)
         setSessionExpiry(new Date(Date.now() + 10 * 24 * 60 * 60 * 1000));
-        console.log("Session refreshed successfully");
       }
     } catch (error) {
       console.error("Session refresh failed:", error);

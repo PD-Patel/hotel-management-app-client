@@ -29,12 +29,19 @@ export default function App() {
         // Use AuthContext login to set authentication state
         login(response.user);
 
-        // Redirect based on user role and position
+        // Redirect based on user role and pay method
         if (
           response.user.role === "admin" ||
           response.user.role === "manager"
         ) {
           navigate("/dashboard");
+        } else if (response.user.role === "frontdesk") {
+          navigate("/frontdesk");
+        } else if (response.user.role === "housekeeping") {
+          navigate("/housekeeping-employee");
+        } else if (response.user.payMethod === "per_room_rate") {
+          // Per room rate employees go to housekeeping page instead of home
+          navigate("/housekeeping-employee");
         } else {
           navigate("/home");
         }

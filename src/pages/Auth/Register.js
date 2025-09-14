@@ -452,7 +452,9 @@ const ProgressStep = styled.div`
   gap: 8px;
 `;
 
-const StepNumber = styled.div`
+const StepNumber = styled.div.withConfig({
+  shouldForwardProp: (prop) => !["completed", "active"].includes(prop),
+})`
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -467,7 +469,9 @@ const StepNumber = styled.div`
   transition: all 0.3s ease;
 `;
 
-const StepLabel = styled.span`
+const StepLabel = styled.span.withConfig({
+  shouldForwardProp: (prop) => !["completed", "active"].includes(prop),
+})`
   font-size: 12px;
   font-weight: 500;
   color: ${(props) =>
@@ -476,7 +480,9 @@ const StepLabel = styled.span`
   transition: all 0.3s ease;
 `;
 
-const ProgressLine = styled.div`
+const ProgressLine = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== "active",
+})`
   width: 60px;
   height: 2px;
   background-color: ${(props) => (props.active ? "#007bff" : "#e9ecef")};

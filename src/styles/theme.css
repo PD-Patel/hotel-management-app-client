@@ -1,0 +1,231 @@
+/* Light Theme (Default) */
+:root {
+  /* Background Colors */
+  --bg-primary: #fafbfc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f8fafc;
+  --bg-header: #fafbfc;
+
+  /* Text Colors */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #475569;
+  --text-muted: #94a3b8;
+
+  /* Border Colors */
+  --border-primary: #e2e8f0;
+  --border-secondary: #f1f5f9;
+  --border-accent: #d1d5db;
+
+  /* Card Colors */
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  /* Button Colors */
+  --btn-primary: #3b82f6;
+  --btn-primary-hover: #2563eb;
+  --btn-secondary: #6b7280;
+  --btn-danger: #ef4444;
+
+  /* Status Colors */
+  --status-success: #22c55e;
+  --status-warning: #f59e0b;
+  --status-error: #ef4444;
+  --status-info: #3b82f6;
+
+  /* Sidebar Colors */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #f0f0f0;
+  --sidebar-text: #424242;
+  --sidebar-active: #e3f2fd;
+  --sidebar-active-text: #4285f4;
+  --sidebar-hover: rgba(59, 130, 246, 0.05);
+  --sidebar-hover-border: rgba(59, 130, 246, 0.1);
+
+  /* Table Colors */
+  --table-header-bg: linear-gradient(135deg, #fafbfc 0%, #f1f5f9 100%);
+  --table-row-hover: #fafbfc;
+  --table-border: #f1f5f9;
+
+  /* Overlay Colors */
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+
+  /* Shadow Colors */
+  --shadow-light: rgba(0, 0, 0, 0.08);
+  --shadow-medium: rgba(0, 0, 0, 0.15);
+  --shadow-heavy: rgba(0, 0, 0, 0.2);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  /* Background Colors */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-header: #1e293b;
+
+  /* Text Colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-muted: #64748b;
+
+  /* Border Colors */
+  --border-primary: #334155;
+  --border-secondary: #475569;
+  --border-accent: #64748b;
+
+  /* Card Colors */
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  /* Button Colors */
+  --btn-primary: #3b82f6;
+  --btn-primary-hover: #60a5fa;
+  --btn-secondary: #64748b;
+  --btn-danger: #f87171;
+
+  /* Status Colors */
+  --status-success: #4ade80;
+  --status-warning: #fbbf24;
+  --status-error: #f87171;
+  --status-info: #60a5fa;
+
+  /* Sidebar Colors */
+  --sidebar-bg: #1e293b;
+  --sidebar-border: #334155;
+  --sidebar-text: #cbd5e1;
+  --sidebar-active: #1e40af;
+  --sidebar-active-text: #60a5fa;
+  --sidebar-hover: rgba(96, 165, 250, 0.1);
+  --sidebar-hover-border: rgba(96, 165, 250, 0.2);
+
+  /* Table Colors */
+  --table-header-bg: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  --table-row-hover: #334155;
+  --table-border: #475569;
+
+  /* Overlay Colors */
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+
+  /* Shadow Colors */
+  --shadow-light: rgba(0, 0, 0, 0.08);
+  --shadow-medium: rgba(0, 0, 0, 0.15);
+  --shadow-heavy: rgba(0, 0, 0, 0.2);
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease,
+    border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Force CSS variables to have higher specificity */
+body[data-theme="dark"] * {
+  color: var(--text-primary) !important;
+}
+
+/* Ensure body, html, and root always have proper backgrounds */
+body,
+html,
+#root {
+  background-color: var(--bg-primary) !important;
+  min-height: 100vh;
+}
+
+/* Ensure all main containers have proper backgrounds */
+.App,
+.container,
+.Container,
+main,
+.main,
+[class*="Main"],
+[class*="Container"] {
+  background-color: var(--bg-primary) !important;
+  min-height: 100vh;
+}
+
+body[data-theme="dark"] .room-number,
+body[data-theme="dark"] [class*="RoomNumber"] {
+  color: var(--text-primary) !important;
+}
+
+/* Ensure styled-components get the right colors */
+body[data-theme="dark"] [class*="styled"] {
+  color: var(--text-primary) !important;
+}
+
+/* Specific targeting for housekeeping components */
+body[data-theme="dark"] [class*="HousekeepingRoomCard"] {
+  color: var(--text-primary) !important;
+}
+
+body[data-theme="dark"] [class*="HousekeepingRoomCard"] [class*="RoomNumber"] {
+  color: #f8fafc !important;
+}
+
+body[data-theme="dark"] [class*="HousekeepingRoomCard"] [class*="StatusLabel"] {
+  color: #cbd5e1 !important;
+}
+
+body[data-theme="dark"] [class*="HousekeepingRoomCard"] [class*="StatusValue"] {
+  color: var(--text-primary) !important;
+}
+
+/* Specific targeting for bulk action buttons */
+body[data-theme="dark"] [class*="BulkActionButton"] {
+  color: white !important;
+}
+
+body[data-theme="dark"] button[class*="BulkActionButton"] {
+  color: white !important;
+}
+
+/* Ensure all button text is visible in dark mode */
+body[data-theme="dark"] button {
+  color: inherit !important;
+}
+
+/* MDB Form Components Dark Mode Overrides */
+body[data-theme="dark"] .form-outline .form-control {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-primary) !important;
+}
+
+body[data-theme="dark"] .form-outline .form-control:focus {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: #3b82f6 !important;
+}
+
+body[data-theme="dark"] .form-outline .form-control:hover {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-color: #60a5fa !important;
+}
+
+body[data-theme="dark"] .form-outline .form-label {
+  color: var(--text-primary) !important;
+}
+
+body[data-theme="dark"] .form-outline .form-control::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Clock Status Badge Styling */
+body[data-theme="dark"] [class*="StatusText"] {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+  border-color: #059669 !important;
+}
+
+body[data-theme="dark"] [class*="StatusText"][data-active="false"] {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: white !important;
+  border-color: #dc2626 !important;
+}
+
+/* Custom dropdown styling - no longer needed as we use a custom component */

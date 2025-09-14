@@ -31,25 +31,25 @@ export default HousekeepingAssignmentGrid;
 
 const GridContainer = styled.div`
   display: grid;
-  gap: 16px;
+  gap: 12px;
   max-width: 1200px;
 
-  /* Responsive grid columns - more columns since cards are smaller */
-  grid-template-columns: 2fr; /* Default: 2 columns for mobile */
+  /* Mobile Layout - 3 columns for better mobile experience */
+  grid-template-columns: repeat(3, 1fr);
 
   @media (min-width: 640px) {
-    grid-template-columns: repeat(3, 1fr); /* 3 columns for small tablets */
+    grid-template-columns: repeat(4, 1fr); /* 4 columns for small tablets */
   }
 
   @media (min-width: 768px) {
-    grid-template-columns: repeat(4, 1fr); /* 4 columns for tablets */
+    grid-template-columns: repeat(5, 1fr); /* 5 columns for tablets */
   }
 
   @media (min-width: 992px) {
-    grid-template-columns: repeat(5, 1fr); /* 5 columns for small desktops */
+    grid-template-columns: repeat(6, 1fr); /* 6 columns for small desktops */
   }
 
   @media (min-width: 1200px) {
-    grid-template-columns: repeat(6, 1fr); /* 6 columns for large desktops */
+    grid-template-columns: repeat(7, 1fr); /* 7 columns for large desktops */
   }
 `;
